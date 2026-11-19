@@ -1,0 +1,26 @@
+{
+    // Per-application EGL routing for libEGL_mali (same format as CIX's app.json).
+    // Matched against the executable name (basename of argv[0], not truncated like /proc/<pid>/comm).
+    // Unlisted applications use libmali (GLES only).
+
+    "file_format_version" : "0.0.1",
+
+    // Always libmali, even if also listed below.
+    "cix" : [
+        "gnome-shell",
+        "Xwayland"
+    ],
+
+    // Mesa EGL with zink on libmali's Vulkan: applications that need desktop GL on Wayland.
+    "mesa" : [
+        "eglgears_wayland",
+        "glmark2-wayland"
+    ],
+
+    // Mesa software rendering.
+    "swrast" : {
+        "enable" : true,
+        "apps" : [
+        ]
+    }
+}

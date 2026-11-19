@@ -1,0 +1,6 @@
+option('mali_libdir', type : 'string', value : '',
+  description : 'Directory of libmali and libEGL_mali (default: <libdir>/mali, the ld.so.conf switch directory)')
+option('mali_library', type : 'string', value : 'libmali.so.0',
+  description : 'Soname of libmali that libEGL_mali forwards to')
+option('app_config', type : 'string', value : '/etc/mali/app.json',
+  description : 'Path of the per-application routing file')
