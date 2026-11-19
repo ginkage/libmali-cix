@@ -1,0 +1,61 @@
+#!/bin/sh
+# mali-switch {mali|panthor|status}: switch the GPU between the CIX vendor stack (mali_kbase + libmali)
+# and the upstream one (panthor + Mesa). Stateless: it only toggles the files below, then runs ldconfig;
+# the switch takes effect after a reboot. Editing the files by hand is equally valid (PLAN.md §1).
+#
+#   /etc/modprobe.d/blacklist-cix-gpu.conf      which kernel driver is blacklisted
+#   /etc/ld.so.conf.d/00-cixgpu-pro.conf        libmali dir on the linker path (libmali, libEGL_cix, libgbm
+#                                               dispatcher); without it mali.json/10_cix.json don't resolve
+#   .../implicit_layer.d/VkLayer_window_system_integration.json   Mali WSI layer (renamed to .disabled)
+#   /usr/share/drirc.d/90-cix-linlondp.conf     linlondp -> zink driconf rule (renamed to .disabled);
+#                                               in Panthor mode mutter's GBM needs kmsro+panfrost there
+set -eu
+
+BL=/etc/modprobe.d/blacklist-cix-gpu.conf
+LD=/etc/ld.so.conf.d/00-cixgpu-pro.conf
+LAYER=/etc/vulkan/implicit_layer.d/VkLayer_window_system_integration.json
+DRIRC=/usr/share/drirc.d/90-cix-linlondp.conf
+
+enable_file() { [ -e "$1.disabled" ] && mv "$1.disabled" "$1"; return 0; }
+disable_file() { [ -e "$1" ] && mv "$1" "$1.disabled"; return 0; }
+state() { if [ -e "$1" ]; then echo on; elif [ -e "$1.disabled" ]; then echo off; else echo missing; fi; }
+
+status() {
+	running=none
+	lsmod | grep -q '^mali_kbase ' && running=mali_kbase
+	lsmod | grep -q '^panthor ' && running=panthor
+	echo "running driver:   $running"
+	echo "blacklisted:      $(grep -E '^[[:space:]]*blacklist (panthor|mali_kbase)' "$BL" | awk '{print $2}' | tr '\n' ' ')"
+	echo "libmali ld path:  $(grep -qE '^[[:space:]]*/' "$LD" && echo on || echo off)"
+	echo "WSI layer:        $(state "$LAYER")"
+	echo "linlondp->zink:   $(state "$DRIRC")"
+}
+
+case "${1:-status}" in
+mali | panthor)
+	[ "$(id -u)" = 0 ] || { echo "run as root" >&2; exit 1; }
+	if [ "$1" = mali ]; then
+		sed -i -e 's/^[#[:space:]]*blacklist panthor/blacklist panthor/' \
+		       -e 's/^[#[:space:]]*blacklist mali_kbase/#blacklist mali_kbase/' "$BL"
+		sed -i 's|^#[[:space:]]*/|/|' "$LD"
+		enable_file "$LAYER"
+		enable_file "$DRIRC"
+	else
+		sed -i -e 's/^[#[:space:]]*blacklist panthor/#blacklist panthor/' \
+		       -e 's/^[#[:space:]]*blacklist mali_kbase/blacklist mali_kbase/' "$BL"
+		sed -i 's|^/|#/|' "$LD"
+		disable_file "$LAYER"
+		disable_file "$DRIRC"
+	fi
+	ldconfig
+	status
+	echo "Reboot to switch to $1."
+	;;
+status)
+	status
+	;;
+*)
+	echo "usage: $0 {mali|panthor|status}" >&2
+	exit 1
+	;;
+esac
