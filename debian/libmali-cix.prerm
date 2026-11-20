@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+# Leaving vendor mode: blacklist mali_kbase (it may stay installed through cix-gpu-dkms), take
+# <libdir>/mali off the linker path, so panthor and Mesa take over after the next reboot.
+if [ "$1" = remove ] && [ -x /usr/sbin/mali-switch ]; then
+	/usr/sbin/mali-switch panthor >/dev/null || true
+fi
+#DEBHELPER#

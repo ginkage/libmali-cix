@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+if [ "$1" = configure ]; then
+	udevadm trigger --subsystem-match=dma_heap --action=change >/dev/null 2>&1 || true
+	# keep the current mode; refresh the linker cache if the vendor stack is on
+	[ -e /etc/ld.so.conf.d/00-aarch64-mali.conf ] && ldconfig
+	[ -e /etc/ld.so.conf.d/00-aarch64-mali.conf ] || echo "libmali-cix: run 'mali-switch mali' and reboot to use the vendor GPU stack"
+fi
+#DEBHELPER#

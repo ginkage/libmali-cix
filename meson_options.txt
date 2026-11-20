@@ -4,3 +4,7 @@ option('mali_library', type : 'string', value : 'libmali.so.0',
   description : 'Soname of libmali that libEGL_mali forwards to')
 option('app_config', type : 'string', value : '/etc/mali/app.json',
   description : 'Path of the per-application routing file')
+option('blobs', type : 'boolean', value : true,
+  description : 'Install libmali, its libgbm.so.1 wrapper, the Vulkan/OpenCL manifests and the firmware')
+option('wsi_layer', type : 'boolean', value : true,
+  description : 'Install the Vulkan WSI layer from wsi/ (scripts/update_wsi.sh)')

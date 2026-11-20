@@ -1,0 +1,25 @@
+Source: libmali-cix
+Section: libs
+Priority: optional
+Maintainer: Ivan Podogov <ginkage.uk@gmail.com>
+Build-Depends: debhelper-compat (= 13), meson, pkgconf
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Vcs-Git: https://github.com/ginkage/libmali-cix
+
+Package: libmali-cix
+Architecture: arm64
+Depends: ${shlibs:Depends}, ${misc:Depends}, libegl1, libglvnd0, libvulkan1, ocl-icd-libopencl1
+Recommends: cix-gpu-dkms
+Conflicts: cix-gpu-umd
+Replaces: cix-gpu-umd
+Description: Arm Mali vendor userspace driver for the CIX P1 (Mali-G720)
+ libmali r54p1 (GLES, EGL, Vulkan, OpenCL, GBM) for the CIX P1 / CD8180 GPU,
+ next to Mesa: libEGL_mali, a glvnd EGL vendor that routes each application
+ to libmali or to Mesa (zink on libmali's Vulkan) per /etc/mali/app.json; a
+ libgbm.so.1 wrapper; the Vulkan window system integration layer; the CSF
+ firmware; manifests, a dma-heap udev rule, and mali-switch.
+ .
+ Everything is installed inert under <libdir>/mali. "mali-switch mali" puts it
+ on the linker path and blacklists panthor (needs cix-gpu-dkms); "mali-switch
+ panthor" goes back to panthor and Mesa. Both take effect after a reboot.

@@ -1,0 +1,4 @@
+# libmali and the Vulkan WSI layer allocate from /dev/dma_heap/system (and, for protected content,
+# the other heaps). The kernel makes them root:0600; give them to the render group and the active
+# seat instead of world-writable (CIX's 99-cma-device.rules uses MODE="0666").
+SUBSYSTEM=="dma_heap", GROUP="render", MODE="0660", TAG+="uaccess"

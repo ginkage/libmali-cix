@@ -1,55 +1,74 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
 # mali-switch {mali|panthor|status}: switch the GPU between the CIX vendor stack (mali_kbase + libmali)
-# and the upstream one (panthor + Mesa). Stateless: it only toggles the files below, then runs ldconfig;
-# the switch takes effect after a reboot. Editing the files by hand is equally valid (PLAN.md §1).
+# and the upstream one (panthor + Mesa). The packages install everything inert; this script owns the
+# three small files that turn the vendor stack on (no package ships them, so upgrades never touch the
+# mode). The switch takes effect after a reboot.
 #
 #   /etc/modprobe.d/blacklist-cix-gpu.conf      which kernel driver is blacklisted
-#   /etc/ld.so.conf.d/00-cixgpu-pro.conf        libmali dir on the linker path (libmali, libEGL_cix, libgbm
-#                                               dispatcher); without it mali.json/10_cix.json don't resolve
-#   .../implicit_layer.d/VkLayer_window_system_integration.json   Mali WSI layer (renamed to .disabled)
-#   /usr/share/drirc.d/90-cix-linlondp.conf     linlondp -> zink driconf rule (renamed to .disabled);
-#                                               in Panthor mode mutter's GBM needs kmsro+panfrost there
+#   /etc/ld.so.conf.d/00-aarch64-mali.conf      <libdir>/mali on the linker path: libmali, libEGL_mali,
+#                                               libgbm.so.1 and the WSI layer; every manifest names a bare
+#                                               soname from there, so without it none of them resolve
+#   /etc/drirc -> /usr/share/libmali-cix/drirc-linlondp-zink.conf
+#                                               render on linlondp with zink (libmali Vulkan) instead of
+#                                               kmsro; in Panthor mode mutter's GBM needs kmsro+panfrost
 set -eu
 
+LIBDIR=/usr/lib/aarch64-linux-gnu/mali
 BL=/etc/modprobe.d/blacklist-cix-gpu.conf
-LD=/etc/ld.so.conf.d/00-cixgpu-pro.conf
-LAYER=/etc/vulkan/implicit_layer.d/VkLayer_window_system_integration.json
-DRIRC=/usr/share/drirc.d/90-cix-linlondp.conf
+LD=/etc/ld.so.conf.d/00-aarch64-mali.conf
+DRIRC=/etc/drirc
+DRIRC_RULE=/usr/share/libmali-cix/drirc-linlondp-zink.conf
 
-enable_file() { [ -e "$1.disabled" ] && mv "$1.disabled" "$1"; return 0; }
-disable_file() { [ -e "$1" ] && mv "$1" "$1.disabled"; return 0; }
-state() { if [ -e "$1" ]; then echo on; elif [ -e "$1.disabled" ]; then echo off; else echo missing; fi; }
+blacklisted() { [ -e "$BL" ] && grep -E '^[[:space:]]*blacklist (panthor|mali_kbase)' "$BL" | awk '{print $2}' | tr '\n' ' '; }
 
 status() {
 	running=none
 	lsmod | grep -q '^mali_kbase ' && running=mali_kbase
 	lsmod | grep -q '^panthor ' && running=panthor
 	echo "running driver:   $running"
-	echo "blacklisted:      $(grep -E '^[[:space:]]*blacklist (panthor|mali_kbase)' "$BL" | awk '{print $2}' | tr '\n' ' ')"
-	echo "libmali ld path:  $(grep -qE '^[[:space:]]*/' "$LD" && echo on || echo off)"
-	echo "WSI layer:        $(state "$LAYER")"
-	echo "linlondp->zink:   $(state "$DRIRC")"
+	echo "blacklisted:      $(blacklisted)"
+	echo "libmali ld path:  $([ -e "$LD" ] && echo on || echo off)"
+	echo "linlondp->zink:   $([ "$(readlink "$DRIRC" 2>/dev/null)" = "$DRIRC_RULE" ] && echo on || echo off)"
+}
+
+write_blacklist() {
+	cat > "$BL" <<EOF
+# Written by mali-switch ($1 mode): the GPU driver that must not bind CIXH5000.
+blacklist $2
+EOF
 }
 
 case "${1:-status}" in
-mali | panthor)
+mali)
 	[ "$(id -u)" = 0 ] || { echo "run as root" >&2; exit 1; }
-	if [ "$1" = mali ]; then
-		sed -i -e 's/^[#[:space:]]*blacklist panthor/blacklist panthor/' \
-		       -e 's/^[#[:space:]]*blacklist mali_kbase/#blacklist mali_kbase/' "$BL"
-		sed -i 's|^#[[:space:]]*/|/|' "$LD"
-		enable_file "$LAYER"
-		enable_file "$DRIRC"
+	modinfo mali_kbase >/dev/null 2>&1 || echo "warning: no mali_kbase module for $(uname -r) (install cix-gpu-dkms)" >&2
+	if [ -e "$DRIRC" ] && [ "$(readlink "$DRIRC" 2>/dev/null)" != "$DRIRC_RULE" ]; then
+		echo "$DRIRC exists and is not mali-switch's link; not touching it (add the rule from $DRIRC_RULE by hand)" >&2
 	else
-		sed -i -e 's/^[#[:space:]]*blacklist panthor/#blacklist panthor/' \
-		       -e 's/^[#[:space:]]*blacklist mali_kbase/blacklist mali_kbase/' "$BL"
-		sed -i 's|^/|#/|' "$LD"
-		disable_file "$LAYER"
-		disable_file "$DRIRC"
+		ln -sfn "$DRIRC_RULE" "$DRIRC"
 	fi
+	write_blacklist mali panthor
+	echo "$LIBDIR" > "$LD"
 	ldconfig
 	status
-	echo "Reboot to switch to $1."
+	echo "Reboot to switch to mali."
+	;;
+panthor)
+	[ "$(id -u)" = 0 ] || { echo "run as root" >&2; exit 1; }
+	[ "$(readlink "$DRIRC" 2>/dev/null)" = "$DRIRC_RULE" ] && rm -f "$DRIRC"
+	write_blacklist panthor mali_kbase
+	rm -f "$LD"
+	ldconfig
+	status
+	echo "Reboot to switch to panthor."
+	;;
+off)
+	# Package removal: forget the vendor stack, leave panthor free to bind.
+	[ "$(id -u)" = 0 ] || { echo "run as root" >&2; exit 1; }
+	[ "$(readlink "$DRIRC" 2>/dev/null)" = "$DRIRC_RULE" ] && rm -f "$DRIRC"
+	rm -f "$LD" "$BL"
+	ldconfig
 	;;
 status)
 	status

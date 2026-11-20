@@ -24,26 +24,40 @@ Environment variables:
 
 Variables the gate sets are never overwritten if already set.
 
+## Layout
+
+Everything libmali-specific is installed into `<libdir>/mali` (`/usr/lib/aarch64-linux-gnu/mali`), and every manifest names a bare soname that exists only there:
+
+| Installed | What |
+|---|---|
+| `<libdir>/mali/libmali.so.0.54.1` | libmali r54p1 (GLES, EGL, Vulkan, OpenCL, GBM), `blobs/` |
+| `<libdir>/mali/libEGL_mali.so.0` | the gate, above |
+| `<libdir>/mali/libgbm.so.1` | wrapper that pulls in libmali, which implements GBM (`src/gbm_wrapper.c`) |
+| `<libdir>/mali/libVkLayer_window_system_integration.so` | Vulkan WSI layer, `wsi/` |
+| `/usr/share/glvnd/egl_vendor.d/10_mali.json` | glvnd vendor → `libEGL_mali.so.0` |
+| `/usr/share/vulkan/icd.d/mali.json`, `/usr/share/vulkan/implicit_layer.d/VkLayer_window_system_integration.json` | Vulkan ICD and layer |
+| `/etc/OpenCL/vendors/mali.icd` | ocl-icd → `libmali.so.0` |
+| `/etc/mali/app.json` | routing (conffile) |
+| `/usr/lib/firmware/mali_csffw.bin` | CSF firmware, `blobs/` (must match kbase: r54p1) |
+| `/usr/lib/udev/rules.d/60-mali-dma-heap.rules` | `/dev/dma_heap/*` for the render group and the active seat |
+| `/usr/lib/modprobe.d/linlondp-render.conf` | `linlon_dp enable_render=1` (a render node for the display controller) |
+| `/usr/share/libmali-cix/drirc-linlondp-zink.conf` | loader rule: zink instead of kmsro on linlondp |
+
 ## `mali-switch`
 
-`scripts/mali-switch {mali|panthor|status}` switches the stack between the vendor driver and Panthor. It is stateless and only toggles files:
-- the `blacklist` lines in `/etc/modprobe.d/blacklist-cix-gpu.conf`;
-- the libmali directory in `/etc/ld.so.conf.d/00-cixgpu-pro.conf`;
-- the Mali WSI layer manifest;
-- the linlondp → zink driconf rule.
+`mali-switch {mali|panthor|status}` switches between the vendor stack (`mali_kbase` from cix-gpu-dkms + libmali) and the upstream one (panthor + Mesa). The package installs everything inert; `mali-switch` owns the three files that turn the vendor stack on, which no package ships, so upgrades never change the mode:
 
-It then runs `ldconfig`; the switch takes effect after a reboot. In Panthor mode the gate stops resolving along with libmali, and it would decline anyway.
+- `/etc/ld.so.conf.d/00-aarch64-mali.conf`: `<libdir>/mali` on the linker path. Without it none of the manifests resolve, and glvnd, the Vulkan loader, ocl-icd and libgbm users get Mesa.
+- `/etc/modprobe.d/blacklist-cix-gpu.conf`: blacklists `panthor` (vendor mode) or `mali_kbase`.
+- `/etc/drirc`: a link to the linlondp → zink rule (only if no other `/etc/drirc` exists). In Panthor mode mutter's GBM needs kmsro and panfrost on linlondp.
 
-## Build and install (by hand, until packaged)
+It then runs `ldconfig`; the switch takes effect after a reboot. Removing the package switches to panthor first.
+
+## Build and package
 
 ```sh
-meson setup build && ninja -C build && meson test -C build
-
-# next to libmali (here: the CIX umd deb's directory, which mali-switch puts on/off the linker path)
-sudo install -m644 build/libEGL_mali.so.0.0.0 /opt/cixgpu-pro/lib/aarch64-linux-gnu/
-sudo install -Dm644 data/app.json /etc/mali/app.json
-sudo install -m644 data/10_mali.json /etc/glvnd/egl_vendor.d/10_mali.json
-sudo ldconfig
+meson setup build && ninja -C build && meson test -C build   # development build
+dpkg-buildpackage -b -uc -us                                 # libmali-cix_*.deb
 ```
 
-`10_mali.json` replaces any `10_cix.json`, the plain forwarder with no routing. glvnd reads `/etc/glvnd/egl_vendor.d` before Mesa's `50_mesa.json`.
+The binaries come from CIX (`blobs/README.md`) and from the WSI layer fork (`wsi/README.md`, refreshed with `scripts/update_wsi.sh`). The package replaces CIX's `cix-gpu-umd`.

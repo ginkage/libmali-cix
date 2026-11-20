@@ -1,0 +1,7 @@
+libmali-cix (0.54.1+cix1) resolute; urgency=medium
+
+  * Package libmali r54p1 (cix_proprietary 2026Q3 RC2.3) with libEGL_mali,
+    a libgbm.so.1 wrapper, the Vulkan WSI layer (CIX defaults), the CSF
+    firmware, manifests, a dma-heap udev rule and mali-switch.
+
+ -- Ivan Podogov <ginkage.uk@gmail.com>  Fri, 20 Nov 2026 15:32:42 +0000
