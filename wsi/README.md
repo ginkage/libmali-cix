@@ -1,11 +1,14 @@
 # Vulkan WSI layer
 
-`libVkLayer_window_system_integration.so` is built from [ginkage/vulkan-wsi-layer](https://github.com/ginkage/vulkan-wsi-layer)
-commit `06f7d4d00dfb7f750b51fdfe46e78f3e3be9a645` with the CIX defaults
-(`cix-go/tools/build-wsi-layer.sh`):
+`libVkLayer_window_system_integration.so` and its manifest come from the CIX variant of
+[ginkage/vulkan-wsi-layer](https://github.com/ginkage/vulkan-wsi-layer), built by its CI with
 
     -DWSIALLOC_MEMORY_HEAP_NAME=system -DWSI_REPORT_LAYERED_DRIVER_DEFAULT=OFF -DWSI_DMABUF_HEAP_COHERENT=ON
 
-sha256 `a6db7e89f2714c2498e4d0d0032b5a4c39005e0915698f7d7bd3274682aa904c`.
-Refresh with `scripts/update_wsi.sh <build dir | CI .deb>`, which also rewrites the manifest's
-`library_path` to the bare soname (the layer lives in <libdir>/mali, see mali-switch).
+The release is pinned in `scripts/update_wsi.sh` (`WSI_DEB_URL`, checked against `WSI_DEB_SHA256`):
+currently `v1.3.276-1-667e071`, package `libvulkan-wsi-layer_1.3.276-1+cix1_arm64.deb`.
+CI runs that script before building, so a release always ships the pinned layer; the copy here is the
+same, so that local builds match. To move to a newer layer, update the pin, run the script and commit.
+It also takes a local CMake build dir (`cix-go/tools/build-wsi-layer.sh`) or another `.deb` for testing.
+The manifest's `library_path` is rewritten to the bare soname (the layer lives in <libdir>/mali, see
+mali-switch).

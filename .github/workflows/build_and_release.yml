@@ -22,7 +22,7 @@ jobs:
         run: |
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-            build-essential debhelper devscripts fakeroot dpkg-dev git ca-certificates
+            build-essential debhelper devscripts fakeroot dpkg-dev git ca-certificates curl
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,6 +31,10 @@ jobs:
         run: |
           DEBIAN_FRONTEND=noninteractive apt-get build-dep -y .
           apt-get clean
+
+      - name: Refresh bundled Vulkan WSI layer
+        # The pinned CIX release of the vulkan-wsi-layer fork (scripts/update_wsi.sh, checksummed).
+        run: ./scripts/update_wsi.sh
 
       - name: Build Debian package
         # libmali and the WSI layer are prebuilt (blobs/, wsi/); the build compiles the gate and the
