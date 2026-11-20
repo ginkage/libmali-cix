@@ -3,7 +3,7 @@
 #
 # update_wsi.sh - refresh the bundled Vulkan WSI layer from a build of the vulkan-wsi-layer fork
 # (github.com/ginkage/vulkan-wsi-layer) with the CIX defaults:
-#   -DWSIALLOC_MEMORY_HEAP_NAME=system -DWSI_REPORT_LAYERED_DRIVER_DEFAULT=OFF
+#   -DWSIALLOC_MEMORY_HEAP_NAME=system -DWSI_REPORT_LAYERED_DRIVER_DEFAULT=OFF -DWSI_DMABUF_HEAP_COHERENT=ON
 #
 #   scripts/update_wsi.sh <build dir>     a local CMake build (e.g. cix-go/build/vulkan-wsi-layer)
 #   scripts/update_wsi.sh <file.deb>      a CI release package of that variant

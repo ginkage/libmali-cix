@@ -1,3 +1,12 @@
+libmali-cix (0.54.1+cix3) resolute; urgency=medium
+
+  * WSI layer 06f7d4d, built with -DWSI_DMABUF_HEAP_COHERENT=ON: dma-buf export
+    emulation now works with the cached system heap, which fixes zink without
+    kopper (Steam's webhelper sets LIBGL_KOPPER_DISABLE; its GPU process
+    crashed and fell back to SwiftShader).
+
+ -- Ivan Podogov <ginkage.uk@gmail.com>  Fri, 20 Nov 2026 17:02:19 +0000
+
 libmali-cix (0.54.1+cix2) resolute; urgency=medium
 
   * Provide cix-gpu-umd (= 2.0.0): packages built for the CIX stack depend on it
