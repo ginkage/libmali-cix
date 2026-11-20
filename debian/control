@@ -11,6 +11,7 @@ Package: libmali-cix
 Architecture: arm64
 Depends: ${shlibs:Depends}, ${misc:Depends}, libegl1, libglvnd0, libvulkan1, ocl-icd-libopencl1
 Recommends: cix-gpu-dkms
+Provides: cix-gpu-umd (= 2.0.0)
 Conflicts: cix-gpu-umd
 Replaces: cix-gpu-umd
 Description: Arm Mali vendor userspace driver for the CIX P1 (Mali-G720)
