@@ -1,6 +1,27 @@
 # libmali-cix: userspace glue for the CIX vendor GPU stack
 
-Glue for running Arm's proprietary Mali driver (`libmali`, r54p1, as shipped by CIX for the Sky1 / CD8180 Mali-G720-Immortalis) next to Mesa on a stock distro. glvnd, the Vulkan loader and Mesa stay unmodified. The counterpart of `libmali-rockchip`. Debian packaging comes later; for now the pieces are installed by hand.
+Glue for running Arm's proprietary Mali driver (`libmali`, r54p1, as shipped by CIX for the Sky1 / CD8180 Mali-G720-Immortalis) next to Mesa on a stock distro. glvnd and the Vulkan loader stay unmodified. The counterpart of `libmali-rockchip`.
+
+## Install the whole stack
+
+On Armbian for the CIX P1 boards (Ubuntu 26.04 "resolute", `edge` kernel, e.g. the Orion O6/O6N), one script installs the vendor stack from the latest GitHub releases of its four parts and switches to it:
+
+| Package | Repository | What |
+|---|---|---|
+| `cix-gpu-dkms` | [ginkage/mali-dkms-cix](https://github.com/ginkage/mali-dkms-cix) | the Mali kernel driver (`mali_kbase`, DKMS) |
+| `libmali-cix` | this one | libmali, the glue below, the Vulkan WSI layer, firmware |
+| the installed Mesa packages, `+cix` | [ginkage/mesa-cix](https://github.com/ginkage/mesa-cix) | Armbian's Mesa plus zink on libmali (desktop GL) |
+| `xwayland`, `+cixmali` | [ginkage/xserver](https://github.com/ginkage/xserver) (branch `24.1.10`) | Xwayland with glamor on libmali |
+
+```sh
+curl -fsSLO https://raw.githubusercontent.com/ginkage/libmali-cix/main/scripts/install-cix-gpu.sh
+sh install-cix-gpu.sh -n   # dry run: what would be downloaded and installed
+sh install-cix-gpu.sh      # install (asks for sudo and for apt's confirmation), then reboot
+```
+
+It replaces every installed package built from Mesa's source with the `+cix` build (they are version-locked together), installs the kernel headers DKMS needs if they are missing, pins the Mesa and Xwayland builds (`/etc/apt/preferences.d/cix-gpu.pref`) so distro updates don't replace them, and runs `mali-switch mali`. Rerun it to update. `sudo mali-switch panthor` and a reboot go back to the upstream stack (Panthor, Panfrost, PanVK), with the same Mesa.
+
+Known limits: libmali has no desktop GL, so desktop-GL applications get zink (GL 4.6) on libmali's Vulkan. The display is driven in 8 bit (no 10-bit swapchains). Steam's web helper runs zink without kopper (`LIBGL_KOPPER_DISABLE`), which works but costs a GPU wait per frame.
 
 ## `libEGL_mali`: per-application EGL routing
 
@@ -60,4 +81,4 @@ meson setup build && ninja -C build && meson test -C build   # development build
 dpkg-buildpackage -b -uc -us                                 # libmali-cix_*.deb
 ```
 
-The binaries come from CIX (`blobs/README.md`) and from the WSI layer fork (`wsi/README.md`, refreshed with `scripts/update_wsi.sh`). The package replaces CIX's `cix-gpu-umd`.
+The binaries come from CIX (`blobs/README.md`) and from the CIX variant of the WSI layer fork's CI release (`wsi/README.md`): `scripts/update_wsi.sh` downloads the pinned release, and CI runs it before building. The package replaces and provides CIX's `cix-gpu-umd`. CI builds the package in an `ubuntu:26.04` container and publishes it as a GitHub release for every push to `main`.
