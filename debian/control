@@ -2,7 +2,10 @@ Source: libmali-cix
 Section: libs
 Priority: optional
 Maintainer: Ivan Podogov <ginkage.uk@gmail.com>
-Build-Depends: debhelper-compat (= 13), meson, pkgconf
+Build-Depends: debhelper-compat (= 13), meson, pkgconf,
+# libraries the prebuilt libmali and WSI layer link against, for dpkg-shlibdeps
+ libdrm2, libwayland-client0, libwayland-server0, libx11-6, libx11-xcb1, libxcb1,
+ libxcb-dri3-0, libxcb-present0, libxcb-shm0, libxcb-sync1, libxrandr2
 Standards-Version: 4.7.0
 Rules-Requires-Root: no
 Vcs-Git: https://github.com/ginkage/libmali-cix
