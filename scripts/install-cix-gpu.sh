@@ -8,10 +8,12 @@ set -eu
 dry=; [ "${1:-}" = -n ] && dry=1
 [ -n "$dry" ] || [ "$(id -u)" = 0 ] || exec sudo sh "$0" "$@"
 dir=$(mktemp -d); trap 'rm -rf "$dir"' EXIT
+chmod 755 "$dir"   # apt reads local debs as _apt: mktemp's 0700 makes it fall back to root, with a warning
 fetch() { # repo, asset regex: download the newest release asset matching it
 	url=$(curl -fsSL "https://api.github.com/repos/ginkage/$1/releases?per_page=20" | grep -o 'https://[^"]*\.deb' | grep -E "/$2" | head -1)
 	[ -n "$url" ] || { echo "no $2 in ginkage/$1 releases" >&2; exit 1; }
-	curl -fsSL -o "$dir/$(echo "${url##*/}" | sed 's/%2B/+/g')" "$url"
+	f="$dir/$(echo "${url##*/}" | sed 's/%2B/+/g')"
+	curl -fsSL -o "$f" "$url"; chmod 644 "$f"
 }
 fetch mali-dkms-cix 'cix-gpu-dkms_'; fetch libmali-cix 'libmali-cix_'; fetch xserver 'xwayland_24\.'
 for p in $(dpkg-query -W -f '${db:Status-Abbrev} ${Package} ${source:Package}\n' | awk '$1 == "ii" && $3 == "mesa" {print $2}'); do
