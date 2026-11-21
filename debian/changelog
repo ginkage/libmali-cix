@@ -1,3 +1,15 @@
+libmali-cix (0.54.1+cix4) resolute; urgency=medium
+
+  * WSI layer a8cb24e (CI release v1.3.276-1-a8cb24e): X11 swapchains keep the
+    window size from Present ConfigureNotify events instead of a GetGeometry
+    round trip on every surface query. zink's kopper queries the surface
+    capabilities every frame, so X11 GL apps no longer wait for the X server
+    once per frame (light glmark2 scenes up to ~1.9x faster). Window resizes are
+    now reported as VK_SUBOPTIMAL_KHR from acquire/present, as Mesa's X11 WSI
+    does.
+
+ -- Ivan Podogov <ginkage.uk@gmail.com>  Sat, 21 Nov 2026 10:37:17 +0000
+
 libmali-cix (0.54.1+cix3) resolute; urgency=medium
 
   * WSI layer 06f7d4d, built with -DWSI_DMABUF_HEAP_COHERENT=ON: dma-buf export
