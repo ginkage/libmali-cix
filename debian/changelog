@@ -1,3 +1,15 @@
+libmali-cix (0.54.1+cix5) resolute; urgency=medium
+
+  * WSI layer 8f43bea (CI release v1.3.276-1-8f43bea), for 32-bit Windows
+    games under Proton (WSI_LOW_ADDRESS_MAP=1, with cix-gpu-dkms +cix2):
+    - hide VK_EXT_external_memory_host in that mode, so Wine maps memory with
+      vkMapMemory instead of tagging every image HOST_ALLOCATION, which
+      libmali refuses ("Failed to create Direct3D device");
+    - answer vkGetDeviceProcAddr with the layer's own, so layers above it
+      (Steam's fossilize) no longer bypass its device hooks.
+
+ -- Ivan Podogov <ginkage.uk@gmail.com>  Sat, 21 Nov 2026 13:38:45 +0000
+
 libmali-cix (0.54.1+cix4) resolute; urgency=medium
 
   * WSI layer a8cb24e (CI release v1.3.276-1-a8cb24e): X11 swapchains keep the

@@ -6,7 +6,7 @@
     -DWSIALLOC_MEMORY_HEAP_NAME=system -DWSI_REPORT_LAYERED_DRIVER_DEFAULT=OFF -DWSI_DMABUF_HEAP_COHERENT=ON
 
 The release is pinned in `scripts/update_wsi.sh` (`WSI_DEB_URL`, checked against `WSI_DEB_SHA256`):
-currently `v1.3.276-1-a8cb24e`, package `libvulkan-wsi-layer_1.3.276-1+cix1_arm64.deb`.
+currently `v1.3.276-1-8f43bea`, package `libvulkan-wsi-layer_1.3.276-1+cix1_arm64.deb`.
 CI runs that script before building, so a release always ships the pinned layer; the copy here is the
 same, so that local builds match. To move to a newer layer, update the pin, run the script and commit.
 It also takes a local CMake build dir (`cix-go/tools/build-wsi-layer.sh`) or another `.deb` for testing.
