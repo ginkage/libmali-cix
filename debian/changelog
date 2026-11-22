@@ -1,3 +1,15 @@
+libmali-cix (0.54.1+cix6) resolute; urgency=medium
+
+  * WSI layer 759f8c1 (CI release v1.3.276-1-759f8c1): for the engine name
+    "DXVK", report shaderClipDistance, shaderCullDistance, multiViewport and
+    fillModeNonSolid as missing. libmali turns them on for that engine name
+    only and has none of them: its compiler crashes on any shader that
+    accesses gl_ClipDistance, and LINE/POINT polygon modes draw filled.
+    DXVK builds that treat them as optional (DXVK-Sarek) then run.
+    WSI_HIDE_DXVK_FEATURES=0 keeps the driver's report.
+
+ -- Ivan Podogov <ginkage.uk@gmail.com>  Sun, 22 Nov 2026 10:22:46 +0000
+
 libmali-cix (0.54.1+cix5) resolute; urgency=medium
 
   * WSI layer 8f43bea (CI release v1.3.276-1-8f43bea), for 32-bit Windows
