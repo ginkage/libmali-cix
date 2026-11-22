@@ -1,3 +1,12 @@
+libmali-cix (0.54.1+cix7) resolute; urgency=medium
+
+  * WSI layer cb898f8 (CI release v1.3.276-1-cb898f8): hiding libmali's
+    fake DXVK features is now opt-in with WSI_HIDE_DXVK_FEATURES=1. Hidden,
+    they also block upstream DXVK, which requires them and runs D3D11 games
+    on libmali's report. D3D9 games on DXVK-Sarek set the variable per game.
+
+ -- Ivan Podogov <ginkage.uk@gmail.com>  Sun, 22 Nov 2026 15:05:42 +0000
+
 libmali-cix (0.54.1+cix6) resolute; urgency=medium
 
   * WSI layer 759f8c1 (CI release v1.3.276-1-759f8c1): for the engine name

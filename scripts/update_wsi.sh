@@ -16,8 +16,8 @@
 # The manifest's library_path becomes the bare soname: the layer is installed into <libdir>/mali,
 # which is only on the linker path in vendor mode (mali-switch), so the loader skips it otherwise.
 
-WSI_DEB_URL=https://github.com/ginkage/vulkan-wsi-layer/releases/download/v1.3.276-1-759f8c1/libvulkan-wsi-layer_1.3.276-1%2Bcix1_arm64.deb
-WSI_DEB_SHA256=d591cf6063c34bcd5aa9664ab41d8b3d90f2d53d35fea1a6efd872da5f3a8e03
+WSI_DEB_URL=https://github.com/ginkage/vulkan-wsi-layer/releases/download/v1.3.276-1-cb898f8/libvulkan-wsi-layer_1.3.276-1%2Bcix1_arm64.deb
+WSI_DEB_SHA256=c5a0b39cac4c11a28dee9eb0b2878b4cce5327e3803c8e8956d89ea96f5f8753
 
 src=${1:-$WSI_DEB_URL}
 top=$(cd "$(dirname "$0")/.." && pwd)
